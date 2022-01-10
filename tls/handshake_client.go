@@ -19,7 +19,6 @@ import (
 	"io"
 	"net"
 	"strings"
-	"sync/atomic"
 	"time"
 )
 
@@ -227,7 +226,7 @@ func (c *Conn) clientHandshake(ctx context.Context) (err error) {
 		session:     session,
 	}
 
-	if err := hs.handshake(); err != nil {
+	if err := hs.Handshake(); err != nil {
 		return err
 	}
 
@@ -378,7 +377,7 @@ func (c *Conn) pickTLSVersion(serverHello *serverHelloMsg) error {
 
 // Does the handshake, either a full one or resumes old session. Requires hs.c,
 // hs.hello, hs.serverHello, and, optionally, hs.session to be set.
-func (hs *clientHandshakeState) handshake() error {
+func (hs *clientHandshakeState) Handshake() error {
 	c := hs.c
 
 	isResume, err := hs.processServerHello()
@@ -437,20 +436,7 @@ func (hs *clientHandshakeState) handshake() error {
 		if err := hs.sendFinished(c.clientFinished[:]); err != nil {
 			return err
 		}
-		if _, err := c.flush(); err != nil {
-			return err
-		}
-		c.clientFinishedIsFirst = true
-		if err := hs.readSessionTicket(); err != nil {
-			return err
-		}
-		if err := hs.readFinished(c.serverFinished[:]); err != nil {
-			return err
-		}
 	}
-
-	c.ekm = ekmFromMasterSecret(c.vers, hs.suite, hs.masterSecret, hs.hello.random, hs.serverHello.random)
-	atomic.StoreUint32(&c.handshakeStatus, 1)
 
 	return nil
 }

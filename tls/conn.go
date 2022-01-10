@@ -122,6 +122,21 @@ type Conn struct {
 // export the struct field too.
 
 // LocalAddr returns the local network address.
+func (c *Conn) GetSendBuf() []byte {
+	return c.sendBuf
+}
+
+// LocalAddr returns the local network address.
+func (c *Conn) FlushSendBuf() {
+	c.sendBuf = make([]byte, 0)
+}
+
+// LocalAddr returns the local network address.
+func (c *Conn) SetHand(b []byte) {
+	c.hand = *bytes.NewBuffer(b)
+}
+
+// LocalAddr returns the local network address.
 func (c *Conn) LocalAddr() net.Addr {
 	return c.conn.LocalAddr()
 }
@@ -909,9 +924,9 @@ func (c *Conn) write(data []byte) (int, error) {
 		return len(data), nil
 	}
 
-	n, err := c.conn.Write(data)
-	c.bytesSent += int64(n)
-	return n, err
+	// n, err := c.conn.Write(data)
+	// c.bytesSent += int64(n)
+	return 0, nil
 }
 
 func (c *Conn) flush() (int, error) {
